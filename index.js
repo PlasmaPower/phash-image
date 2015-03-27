@@ -26,3 +26,30 @@ function pHashImage(file, returnBigInt, cb) {
 
   return promise;
 }
+
+/**
+ * Export additional function
+ * @param  {String}   file     - filename, sadly pHash lib doesn't support
+ *                             	 accepting raw buffer
+ * @param  {Function} callback <err, Buffer[hex]>
+ */
+pHashImage.mh = function (file, callback) {
+  var promise = new Promise(function (resolve, reject) {
+    pHash.imageHashMH(file, function (err, hash) {
+      if (err) {
+        return reject(err);
+      }
+
+      // optimize useless conversion?
+      resolve(new Buffer(hash.slice(2), 'hex'));
+    });
+  });
+
+  if (typeof callback === 'function') {
+    promise.then(function phashReturned(hash) {
+      callback(null, hash);
+    }, callback);
+  }
+
+  return promise;
+}
