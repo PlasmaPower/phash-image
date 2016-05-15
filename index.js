@@ -25,7 +25,7 @@ function pHashImage(file, returnBigInt, cb) {
     pHash.imageHash(file, function(err, hash, bigint) {
       if (err) return reject(err);
       if (returnBigInt === true) return resolve(bigint);
-      return resolve(new Buffer(hash.slice(2), 'hex'));
+      return resolve(hash);
     });
   });
 
@@ -51,9 +51,7 @@ pHashImage.mh = function (file, callback) {
   var promise = new Promise(function (resolve, reject) {
     pHash.imageHashMH(file, function (err, hash) {
       if (err) return reject(err);
-
-      // optimize useless conversion?
-      resolve(new Buffer(hash.slice(2), 'hex'));
+      resolve(hash);
     });
   });
 
