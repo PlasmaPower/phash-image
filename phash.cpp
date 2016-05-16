@@ -7,15 +7,6 @@
 #include <iomanip>
 using namespace node;
 
-template < typename T >
-std::string int_to_hex( T i ) {
-  std::stringstream stream;
-  stream << "0x"
-         << std::setfill ('0') << std::setw(sizeof(T)*2)
-         << std::hex << i;
-  return stream.str();
-}
-
 bool fileExists(const char* filename) {
     ifstream file(filename);
     return !!file;
@@ -28,26 +19,11 @@ string NumberToString ( T Number ) {
     return ss.str();
 }
 
-string uint_to_hex(uint8_t* input, int len)
-{
-    static const char* const lut = "0123456789ABCDEF";
-
-    std::stringstream stream;
-    stream << "0x";
-    for (int i = 0; i < len; ++i)
-    {
-        const unsigned char c = input[i];
-        stream << lut[c >> 4] << lut[c & 15];
-    }
-
-    return stream.str();
-}
-
 // https://gist.github.com/rvagg/bb08a8bd2b6cbc264056#file-phash-cpp
 class PhashRequest : public Nan::AsyncWorker {
  public:
   PhashRequest(Nan::Callback *callback, string file)
-    : Nan::AsyncWorker(callback), error(false), file(file), hash(""), bigint("") {}
+    : Nan::AsyncWorker(callback), error(false), file(file), bigint("") {}
   ~PhashRequest() {}
 
   void Execute () {
@@ -59,10 +35,8 @@ class PhashRequest : public Nan::AsyncWorker {
     }
 
     try {
-        ulong64 _hash = 0;
-        ph_dct_imagehash(_file, _hash);
-        hash = int_to_hex(_hash);
-        bigint = NumberToString(_hash);
+        ph_dct_imagehash(_file, hash);
+        bigint = NumberToString(hash);
     }
     catch(...) {
         error = true;
@@ -83,7 +57,17 @@ class PhashRequest : public Nan::AsyncWorker {
         argv[0] = Nan::Null();
     }
 
-    argv[1] = Nan::New<v8::String>(hash).ToLocalChecked();
+    // A bit messy - converts the ulong64 into a char* (byte array) needed to create a Buffer
+    // The problem is that the number's bytes are in the reverse of the needed order
+    // That's why this loop pulls values in reverse
+    size_t size = sizeof hash;
+    char* hashPtr = (char*) &hash;
+    char buffer[size];
+    for (unsigned int i = 0; i < size; i++) {
+      buffer[i] = hashPtr[size - i - 1];
+    }
+
+    argv[1] = Nan::NewBuffer(buffer, sizeof hash).ToLocalChecked();
     argv[2] = Nan::New<v8::String>(bigint).ToLocalChecked();
 
     callback->Call(3, argv);
@@ -92,7 +76,7 @@ class PhashRequest : public Nan::AsyncWorker {
  private:
     bool error;
     string file;
-    string hash;
+    ulong64 hash;
     string bigint;
 };
 
@@ -107,7 +91,7 @@ NAN_METHOD(ImageHashAsync) {
 class MHPhashRequest : public Nan::AsyncWorker {
  public:
   MHPhashRequest(Nan::Callback *callback, string file)
-    : Nan::AsyncWorker(callback), error(false), file(file), hash("") {}
+    : Nan::AsyncWorker(callback), error(false), file(file) {}
   ~MHPhashRequest() {}
 
   void Execute () {
@@ -119,11 +103,9 @@ class MHPhashRequest : public Nan::AsyncWorker {
     }
 
     try {
-        int hashlen = 0;
         int alpha = 2;
         int level = 1;
-        uint8_t* _hash = ph_mh_imagehash(_file, hashlen, alpha, level);
-        hash = uint_to_hex(_hash, hashlen);
+        hash = ph_mh_imagehash(_file, hashlen, alpha, level);
     }
     catch(...) {
         error = true;
@@ -144,7 +126,7 @@ class MHPhashRequest : public Nan::AsyncWorker {
         argv[0] = Nan::Null();
     }
 
-    argv[1] = Nan::New<v8::String>(hash).ToLocalChecked();
+    argv[1] = Nan::NewBuffer((char*) hash, hashlen * sizeof hash[0]).ToLocalChecked();
 
     callback->Call(2, argv);
 
@@ -153,7 +135,8 @@ class MHPhashRequest : public Nan::AsyncWorker {
  private:
     bool error;
     string file;
-    string hash;
+    uint8_t* hash;
+    int hashlen = 0;
 };
 
 NAN_METHOD(MHImageHashAsync) {
