@@ -87,7 +87,7 @@ describe('MH', function () {
   })
 
   it('should return a buffer in the callback', function (done) {
-    return pHash.mh('./examples/a.jpg', function (err, buf) {
+    pHash.mh('./examples/a.jpg', function (err, buf) {
       if (err) return done(err)
       assert(Buffer.isBuffer(buf))
       assert.equal(72, buf.length)
