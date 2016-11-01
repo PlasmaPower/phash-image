@@ -1,14 +1,14 @@
 language: node_js
 node_js:
-- "0.10"
-- "0.12"
-- "4"
-- "5"
+  - '4'
+  - '5'
+  - '6'
+  - 'node'
 before_install:
-- "sudo apt-get update"
-- "sudo apt-get install cimg-dev libphash0-dev libmagickcore-dev"
-- export JOBS=max
-- export prebuild_compile=true
+  - "sudo apt-get update"
+  - "sudo apt-get install cimg-dev libphash0-dev libmagickcore-dev"
+  - export JOBS=max
+  - export prebuild_compile=true
 script: "npm run-script test-travis"
 after_script: "npm install coveralls@2 && cat ./coverage/lcov.info | coveralls"
 env:
