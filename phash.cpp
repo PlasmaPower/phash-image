@@ -62,12 +62,12 @@ class PhashRequest : public Nan::AsyncWorker {
     // That's why this loop pulls values in reverse
     size_t size = sizeof hash;
     char* hashPtr = (char*) &hash;
-    char buffer[size];
+    char* buffer = (char*) malloc(size);
     for (unsigned int i = 0; i < size; i++) {
       buffer[i] = hashPtr[size - i - 1];
     }
 
-    argv[1] = Nan::NewBuffer(buffer, sizeof hash).ToLocalChecked();
+    argv[1] = Nan::NewBuffer(buffer, size).ToLocalChecked();
     argv[2] = Nan::New<v8::String>(bigint).ToLocalChecked();
 
     callback->Call(3, argv);
