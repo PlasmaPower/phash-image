@@ -1,0 +1,5 @@
+file node
+run ./node_modules/mocha/bin/_mocha
+where
+list
+quit
