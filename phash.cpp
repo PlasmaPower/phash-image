@@ -81,7 +81,7 @@ class PhashRequest : public Nan::AsyncWorker {
 };
 
 NAN_METHOD(ImageHashAsync) {
-    v8::String::Utf8Value str(info[0]);
+    Nan::Utf8String str(info[0]);
     Nan::Callback *callback = new Nan::Callback(info[1].As<v8::Function>());
     Nan::AsyncQueueWorker(new PhashRequest(callback, string(*str)));
     return;
@@ -140,7 +140,7 @@ class MHPhashRequest : public Nan::AsyncWorker {
 };
 
 NAN_METHOD(MHImageHashAsync) {
-    v8::String::Utf8Value str(info[0]);
+    Nan::Utf8String str(info[0]);
     Nan::Callback *callback = new Nan::Callback(info[1].As<v8::Function>());
     Nan::AsyncQueueWorker(new MHPhashRequest(callback, string(*str)));
     return;
